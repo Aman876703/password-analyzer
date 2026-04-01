@@ -1,0 +1,49 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+ml-services/rockyou.txt
+# Dependencies
+node_modules/
+venv/
+env/
+__pycache__/
+*.egg-info/
+dist/
+build/
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.pytest_cache/
+
+# Build outputs
+public/
+.next/
+out/
+
+# OS files
+Thumbs.db
+.DS_Store
+*.bak
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+.temp/
