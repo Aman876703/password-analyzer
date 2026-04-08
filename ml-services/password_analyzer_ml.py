@@ -5,6 +5,13 @@ import requests
 import string
 import math
 import pickle
+import os
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=".env")  # 🔥 important
+
+print("OPENROUTER_API_KEY:", os.getenv("OPENROUTER_API_KEY"))  # 🔥 debu    g
+load_dotenv()
 
 app = FastAPI()
 
@@ -23,14 +30,6 @@ scaler = pickle.load(open("scaler.pkl", "rb"))
 # ---------- LOAD COMMON PASSWORDS ----------
 COMMON_PASSWORDS = set()
 COMMON_LIST = []
-
-with open("rockyou.txt", "r", encoding="latin-1") as f:
-    for i, line in enumerate(f):
-        if i >= 100000:
-            break
-        pwd = line.strip().lower()
-        COMMON_PASSWORDS.add(pwd)
-        COMMON_LIST.append(pwd)
 
 class PasswordRequest(BaseModel):
     password: str
@@ -58,14 +57,13 @@ def partial_common(password):
     return False
 
 # ---------- OPENROUTER AI ----------
-OPENROUTER_API_KEY = "YOUR_API_KEY_HERE"
 
 def get_ai_feedback(password):
     try:
         url = "https://openrouter.ai/api/v1/chat/completions"
 
         headers = {
-            "Authorization": "Bearer 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",  # 🔥 replace with your key
+            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
             "Content-Type": "application/json",
             "HTTP-Referer": "http://localhost:3000",
             "X-Title": "Password Analyzer"
@@ -85,12 +83,10 @@ Rules:
 - Output ONLY 6 lines
 - First 3 lines must be passwords
 - Next 3 lines must be improvement tips
-- Do NOT add headings like "Strong passwords" or "Tips"
-- Do NOT add bullets (-, *, etc.)
-- Do NOT add numbering (1., 2., etc.)
-- Each item must be on a new line
-
-Make sure passwords are improved versions of the given password and more secure.
+- Do NOT add headings
+- Do NOT add bullets
+- Do NOT add numbering
+- Each item must be on new line
 """
                 }
             ]
@@ -98,13 +94,11 @@ Make sure passwords are improved versions of the given password and more secure.
 
         res = requests.post(url, headers=headers, json=data)
 
-        # 🔥 DEBUG (keep for testing)
         print("STATUS:", res.status_code)
         print("RESPONSE:", res.text)
 
         result = res.json()
 
-        # ❌ If API failed
         if "choices" not in result:
             raise Exception(result)
 
@@ -113,30 +107,24 @@ Make sure passwords are improved versions of the given password and more secure.
         suggestions = []
         improvements = []
 
-        # 🔥 FLEXIBLE PARSING
         for line in text.split("\n"):
             line = line.strip()
 
             if not line:
                 continue
 
-            # Remove numbering (1. 2. 3.)
             if line[0].isdigit():
                 line = line.split(".", 1)[-1].strip()
 
-            # First 3 → suggestions
             if len(suggestions) < 3:
                 suggestions.append(line)
             else:
-                clean_line = line.replace("Improvement tips:", "").strip()
-                if clean_line and "improvement tips" not in clean_line.lower():
-                    improvements.append(clean_line)
+                improvements.append(line)
 
-        # Ensure exactly 3 each
         suggestions = suggestions[:3]
         improvements = improvements[:3]
 
-        # 🔥 FALLBACK IF EMPTY
+        # fallback safety
         if not suggestions:
             suggestions = [
                 password + "@123",
@@ -156,7 +144,6 @@ Make sure passwords are improved versions of the given password and more secure.
     except Exception as e:
         print("❌ OpenRouter failed:", e)
 
-        # 🔥 SAFE FALLBACK
         return [
             password + "@123",
             password.capitalize() + "#Secure",
@@ -167,7 +154,7 @@ Make sure passwords are improved versions of the given password and more secure.
             "Include numbers",
             "Add special characters"
         ]
-    
+        
 # ---------- ENTROPY ----------
 def calculate_entropy(password):
     charset = 0
