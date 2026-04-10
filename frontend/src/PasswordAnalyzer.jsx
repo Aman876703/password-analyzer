@@ -166,7 +166,7 @@ const PasswordAnalyzer = () => {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/analyze", {
+      const res = await fetch("https://password-backend-76cz.onrender.com/api/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
