@@ -13,11 +13,6 @@ const auth = require('./middleware/auth');
 
 dotenv.config();
 
-// 🔥 MongoDB Connection (LOCAL)
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('MongoDB error:', err));
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 const ML_API_URL = process.env.ML_API_URL || 'http://localhost:8000';
@@ -46,25 +41,21 @@ app.get('/api/health', (req, res) => {
 app.post('/api/analyze',auth, async (req, res) => {
   try {
     const { password } = req.body;
-    
 
     if (!password) {
       return res.status(400).json({ error: 'Password is required' });
     }
 
-    // Add timestamp for latency tracking
     const startTime = Date.now();
 
-    // Call FastAPI ML service
     const response = await axios.post(`${ML_API_URL}/analyze`, {
       password: password
     }, {
-      timeout: 10000 // 10 second timeout
+      timeout: 10000
     });
 
     const analysisTime = Date.now() - startTime;
 
-    // Add network latency to response
     response.data.network_latency_ms = analysisTime;
     response.data.total_latency_ms = analysisTime + response.data.estimated_latency_ms;
 
@@ -129,9 +120,22 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Express server running on http://localhost:${PORT}`);
-  console.log(`📡 Connected to ML service at ${ML_API_URL}`);
-});
+
+// 🔥 FIXED PART (ONLY THIS CHANGED)
+
+// Connect DB FIRST → then start server
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('✅ MongoDB connected');
+
+    app.listen(PORT, () => {
+      console.log(`✅ Express server running on http://localhost:${PORT}`);
+      console.log(`📡 Connected to ML service at ${ML_API_URL}`);
+    });
+
+  })
+  .catch((err) => {
+    console.error('❌ MongoDB error:', err);
+  });
 
 module.exports = app;
