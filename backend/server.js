@@ -14,7 +14,7 @@ const auth = require('./middleware/auth');
 dotenv.config();
 
 // 🔥 MongoDB Connection (LOCAL)
-mongoose.connect('mongodb://127.0.0.1:27017/password-analyzer')
+mongoose.connect('mongodb+srv://amansinamdar2005:aman123@cluster0.sbtyicz.mongodb.net/?appName=Cluster0/password-analyzer')
   .then(() => console.log('✅ MongoDB connected'))
   .catch((err) => console.error('MongoDB error:', err));
 
